@@ -1,0 +1,59 @@
+server:
+  port: 8084
+spring:
+  data:
+    r2dbc:
+      repositories:
+        enabled: true
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/projectdb
+    username: postgres
+    password: 1234
+  cloud:
+    function:
+      definition: packageCreatedBinding;
+    stream:
+        default-binder: kafka_default
+        bindings:
+          packageCreatedBinding-in-0:
+            destination: event.package.created
+            binder: kafka_default
+            userNativeDecoding: true
+          packageCreatedBinding-out-0:
+            destination: event.package-eligible
+            binder: kafka_default
+            userNativeDecoding: true
+          letterCreatedBinding-in-0:
+            destination: event.letter.created
+            binder: kafka_default
+            userNativeDecoding: true
+          letterCreatedBinding-out-0:
+            destination: event.letter-eligible
+            binder: kafka_default
+            userNativeDecoding: true
+        binders:
+            kafka_default:
+            type: kafka
+            environment:
+                spring:
+                cloud:
+                    stream:
+                    kafka:
+                        default:
+                        consumer:
+                            configuration:
+                            session.timeout.ms: 10000
+                            max.poll.records: 10
+                        producer:
+                            compressionType: gzip
+                            configuration:
+                            max.request.size: 1000000000
+                        binder:
+                        autoAddPartitions: true
+                        autoCreateTopics: true
+                        requiredAcks: -1
+                        minPartitionCount: 3
+                        replicationFactor: 1
+                        serdeError: logAndContinue
+                        brokers: localhost:9092
+

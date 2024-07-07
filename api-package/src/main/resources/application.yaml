@@ -1,0 +1,45 @@
+server:
+  port: 8082
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/projectdb
+    username: postgres
+    password: 1234
+  jpa:
+    hibernate:
+      ddl-auto: update
+  cloud:
+    function:
+      definition:
+    stream:
+      default-binder: kafka_default
+      bindings:
+        packageBinding-out-0:
+          destination: event.package.created
+          binder: kafka_default
+          userNativeDecoding: true
+      binders:
+        kafka_default:
+          type: kafka
+          environment:
+            spring:
+              cloud:
+                stream:
+                  kafka:
+                    default:
+                      consumer:
+                        configuration:
+                          session.timeout.ms: 10000
+                          max.poll.records: 10
+                      producer:
+                        compressionType: gzip
+                        configuration:
+                          max.request.size: 1000000000
+                    binder:
+                      autoAddPartitions: true
+                      autoCreateTopics: true
+                      requiredAcks: -1
+                      minPartitionCount: 3
+                      replicationFactor: 1
+                      serdeError: logAndContinue
+                      brokers: localhost:9092
